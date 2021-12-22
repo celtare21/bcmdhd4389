@@ -162,14 +162,6 @@ typedef struct pkt_cnt_log {
 #define PKT_CNT_RSN_VALID(rsn)	\
 	(((rsn) > (PKT_CNT_RSN_INVALID)) && ((rsn) < (PKT_CNT_RSN_MAX)))
 
-static const char pkt_cnt_msg[][20] = {
-	"INVALID",
-	"ROAM_SUCCESS",
-	"GROUP_KEY_UPDATE",
-	"CONNECT_SUCCESS",
-	"INVALID"
-};
-
 #if defined(DHD_DNS_DUMP) || defined(DHD_ARP_DUMP) || defined(DHD_ICMP_DUMP) || \
 	defined(DHD_DHCP_DUMP) || defined(DHD_8021X_DUMP) || defined(DHD_PKTDUMP_ROAM)
 #define DHD_PKTFATE_STR_MAX 30

@@ -302,22 +302,6 @@ void dhd_schedule_log_dump(dhd_pub_t *dhdp, void *type)
 void
 dhd_print_buf_addr(dhd_pub_t *dhdp, char *name, void *buf, unsigned int size)
 {
-	if ((dhdp->memdump_enabled == DUMP_MEMONLY) ||
-		(dhdp->memdump_enabled == DUMP_MEMFILE_BUGON) ||
-		(dhdp->memdump_type == DUMP_TYPE_SMMU_FAULT) ||
-#ifdef DHD_DETECT_CONSECUTIVE_MFG_HANG
-		(dhdp->op_mode & DHD_FLAG_MFG_MODE &&
-			(dhdp->hang_count >= MAX_CONSECUTIVE_MFG_HANG_COUNT-1)) ||
-#endif /* DHD_DETECT_CONSECUTIVE_MFG_HANG */
-		FALSE) {
-#if defined(CONFIG_ARM64)
-		DHD_ERROR(("-------- %s: buf(va)=%llx, buf(pa)=%llx, bufsize=%d\n",
-			name, (uint64)buf, (uint64)__virt_to_phys((ulong)buf), size));
-#elif defined(__ARM_ARCH_7A__)
-		DHD_ERROR(("-------- %s: buf(va)=%x, buf(pa)=%x, bufsize=%d\n",
-			name, (uint32)buf, (uint32)__virt_to_phys((ulong)buf), size));
-#endif /* __ARM_ARCH_7A__ */
-	}
 }
 
 void

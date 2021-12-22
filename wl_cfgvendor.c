@@ -1727,7 +1727,6 @@ wl_cfgvendor_notify_dump_completion(struct wiphy *wiphy,
 	/* call wmb() to synchronize with the previous memory operations */
 	OSL_SMP_WMB();
 	DHD_BUS_BUSY_CLEAR_IN_HALDUMP(dhd_pub);
-	dhd_set_dump_status(dhd_pub, DUMP_READY);
 	/* Call another wmb() to make sure wait_for_dump_completion value
 	 * gets updated before waking up waiting context.
 	 */
@@ -1812,9 +1811,6 @@ wl_cfgvendor_set_hal_started(struct wiphy *wiphy,
 	WL_INFORM(("%s,[DUMP] HAL STARTED\n", __FUNCTION__));
 
 	cfg->hal_started = true;
-#ifdef DHD_FILE_DUMP_EVENT
-	dhd_set_dump_status(dhd, DUMP_READY);
-#endif /* DHD_FILE_DUMP_EVENT */
 #ifdef WL_STA_ASSOC_RAND
 	/* If mac randomization is enabled and primary macaddress is not
 	 * randomized, randomize it from HAL init context
@@ -1845,9 +1841,6 @@ wl_cfgvendor_stop_hal(struct wiphy *wiphy,
 	WL_INFORM(("%s,[DUMP] HAL STOPPED\n", __FUNCTION__));
 
 	cfg->hal_started = false;
-#ifdef DHD_FILE_DUMP_EVENT
-	dhd_set_dump_status(dhd, DUMP_NOT_READY);
-#endif /* DHD_FILE_DUMP_EVENT */
 	return BCME_OK;
 }
 #endif /* WL_CFG80211 */
@@ -8867,309 +8860,6 @@ static void wl_cfgvendor_dbg_ring_send_evt(void *ctx,
 }
 #endif /* DEBUGABILITY */
 
-#ifdef DHD_LOG_DUMP
-#ifndef DHD_HAL_RING_DUMP
-#ifdef DHD_SSSR_DUMP
-#define DUMP_SSSR_DUMP_MAX_COUNT	8
-static int wl_cfgvendor_nla_put_sssr_dump_data(struct sk_buff *skb,
-		struct net_device *ndev)
-{
-	int ret = BCME_OK;
-#ifdef DHD_SSSR_DUMP
-	uint32 arr_len[DUMP_SSSR_DUMP_MAX_COUNT];
-#endif /* DHD_SSSR_DUMP */
-	char memdump_path[MEMDUMP_PATH_LEN];
-	dhd_pub_t *dhdp = wl_cfg80211_get_dhdp(ndev);
-
-#ifdef DHD_SSSR_DUMP_BEFORE_SR
-	dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN,
-		"sssr_dump_core_0_before_SR");
-	ret = nla_put_string(skb, DUMP_FILENAME_ATTR_SSSR_CORE_0_BEFORE_DUMP, memdump_path);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put sssr core 0 before dump path, ret=%d\n", ret));
-		goto exit;
-	}
-#endif /* DHD_SSSR_DUMP_BEFORE_SR */
-
-	dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN,
-		"sssr_dump_core_0_after_SR");
-	ret = nla_put_string(skb, DUMP_FILENAME_ATTR_SSSR_CORE_0_AFTER_DUMP, memdump_path);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put sssr core 1 after dump path, ret=%d\n", ret));
-		goto exit;
-	}
-
-#ifdef DHD_SSSR_DUMP_BEFORE_SR
-	dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN,
-		"sssr_dump_core_1_before_SR");
-	ret = nla_put_string(skb, DUMP_FILENAME_ATTR_SSSR_CORE_1_BEFORE_DUMP, memdump_path);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put sssr core 1 before dump path, ret=%d\n", ret));
-		goto exit;
-	}
-#endif /* DHD_SSSR_DUMP_BEFORE_SR */
-
-	dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN,
-		"sssr_dump_core_1_after_SR");
-	ret = nla_put_string(skb, DUMP_FILENAME_ATTR_SSSR_CORE_1_AFTER_DUMP, memdump_path);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put sssr core 1 after dump path, ret=%d\n", ret));
-		goto exit;
-	}
-
-	if (dhdp->sssr_d11_outofreset[2]) {
-#ifdef DHD_SSSR_DUMP_BEFORE_SR
-		dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN,
-			"sssr_dump_core_2_before_SR");
-		ret = nla_put_string(skb, DUMP_FILENAME_ATTR_SSSR_CORE_2_BEFORE_DUMP,
-			memdump_path);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put sssr core 2 before dump path, ret=%d\n",
-				ret));
-			goto exit;
-		}
-#endif /* DHD_SSSR_DUMP_BEFORE_SR */
-
-		dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN,
-			"sssr_dump_core_2_after_SR");
-		ret = nla_put_string(skb, DUMP_FILENAME_ATTR_SSSR_CORE_2_AFTER_DUMP,
-			memdump_path);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put sssr core 2 after dump path, ret=%d\n",
-				ret));
-			goto exit;
-		}
-	}
-
-#ifdef DHD_SSSR_DUMP_BEFORE_SR
-	dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN,
-		"sssr_dump_dig_before_SR");
-	ret = nla_put_string(skb, DUMP_FILENAME_ATTR_SSSR_DIG_BEFORE_DUMP, memdump_path);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put sssr dig before dump path, ret=%d\n", ret));
-		goto exit;
-	}
-#endif /* DHD_SSSR_DUMP_BEFORE_SR */
-
-	dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN,
-		"sssr_dump_dig_after_SR");
-	ret = nla_put_string(skb, DUMP_FILENAME_ATTR_SSSR_DIG_AFTER_DUMP, memdump_path);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put sssr dig after dump path, ret=%d\n", ret));
-		goto exit;
-	}
-
-#ifdef DHD_SSSR_DUMP
-	memset(arr_len, 0, sizeof(arr_len));
-	dhd_nla_put_sssr_dump_len(ndev, arr_len);
-#ifdef DHD_SSSR_DUMP_BEFORE_SR
-	ret |= nla_put_u32(skb, DUMP_LEN_ATTR_SSSR_C0_D11_BEFORE, arr_len[0]);
-	ret |= nla_put_u32(skb, DUMP_LEN_ATTR_SSSR_C1_D11_BEFORE, arr_len[2]);
-	ret |= nla_put_u32(skb, DUMP_LEN_ATTR_SSSR_C2_D11_BEFORE, arr_len[4]);
-	ret |= nla_put_u32(skb, DUMP_LEN_ATTR_SSSR_DIG_BEFORE, arr_len[6]);
-#endif /* DHD_SSSR_DUMP_BEFORE_SR */
-	ret |= nla_put_u32(skb, DUMP_LEN_ATTR_SSSR_C0_D11_AFTER, arr_len[1]);
-	ret |= nla_put_u32(skb, DUMP_LEN_ATTR_SSSR_C1_D11_AFTER, arr_len[3]);
-	ret |= nla_put_u32(skb, DUMP_LEN_ATTR_SSSR_C2_D11_AFTER, arr_len[5]);
-	ret |= nla_put_u32(skb, DUMP_LEN_ATTR_SSSR_DIG_AFTER, arr_len[7]);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put sssr dump len, ret=%d\n", ret));
-		goto exit;
-	}
-#endif /* DHD_SSSR_DUMP */
-
-exit:
-	return ret;
-}
-#else
-static int wl_cfgvendor_nla_put_sssr_dump_data(struct sk_buff *skb,
-		struct net_device *ndev)
-{
-	return BCME_OK;
-}
-#endif /* DHD_SSSR_DUMP */
-#endif /* DHD_HAL_RING_DUMP */
-
-static int wl_cfgvendor_nla_put_debug_dump_data(struct sk_buff *skb,
-		struct net_device *ndev)
-{
-	int ret = BCME_OK;
-	uint32 len = 0;
-#ifdef EWP_DACS
-	int i = 0, j = 0;
-#endif
-
-#ifndef DHD_HAL_RING_DUMP
-	char dump_path[128];
-	ret = dhd_get_debug_dump_file_name(ndev, NULL, dump_path, sizeof(dump_path));
-	if (ret < 0) {
-		WL_ERR(("%s: Failed to get debug dump filename\n", __FUNCTION__));
-		goto exit;
-	}
-	ret = nla_put_string(skb, DUMP_FILENAME_ATTR_DEBUG_DUMP, dump_path);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put debug dump path, ret=%d\n", ret));
-		goto exit;
-	}
-	WL_ERR(("debug_dump path = %s%s\n", dump_path, FILE_NAME_HAL_TAG));
-	wl_print_verinfo(wl_get_cfg(ndev));
-#endif /* DHD_HAL_RING_DUMP */
-
-	len = dhd_get_time_str_len();
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_TIMESTAMP, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put time stamp length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-
-#ifndef DHD_HAL_RING_DUMP
-	len = dhd_get_dld_len(DLD_BUF_TYPE_GENERAL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_GENERAL_LOG, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put general log length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#endif /* DHD_HAL_RING_DUMP */
-#ifdef EWP_ECNTRS_LOGGING
-	len = dhd_get_ecntrs_len(ndev, NULL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_ECNTRS, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put ecntrs length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#endif /* EWP_ECNTRS_LOGGING */
-
-#ifdef EWP_DACS
-	j = DUMP_LEN_ATTR_EWP_HW_INIT_LOG;
-	for (i = LOG_DUMP_SECTION_EWP_HW_INIT_LOG; i <= LOG_DUMP_SECTION_EWP_HW_REG_DUMP; ++i) {
-		len = dhd_get_init_dump_len(ndev, NULL, i);
-		if (len) {
-			ret = nla_put_u32(skb, j, len);
-			if (unlikely(ret)) {
-				WL_ERR(("Failed to nla put init dump length, ret=%d\n", ret));
-				goto exit;
-			}
-		}
-		++j;
-	}
-#endif /* EWP_DACS */
-#ifndef DHD_HAL_RING_DUMP
-	len = dhd_get_dld_len(DLD_BUF_TYPE_SPECIAL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_SPECIAL_LOG, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put special log length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#endif /* DHD_HAL_RING_DUMP */
-	len = dhd_get_dhd_dump_len(ndev, NULL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_DHD_DUMP, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put dhd dump length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-
-#if defined(BCMPCIE)
-	len = dhd_get_ext_trap_len(ndev, NULL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_EXT_TRAP, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put ext trap length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#endif /* BCMPCIE */
-
-#if defined(DHD_FW_COREDUMP) && defined(DNGL_EVENT_SUPPORT)
-	len = dhd_get_health_chk_len(ndev, NULL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_HEALTH_CHK, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put health check length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#endif
-#ifndef DHD_HAL_RING_DUMP
-	len = dhd_get_dld_len(DLD_BUF_TYPE_PRESERVE);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_PRESERVE_LOG, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put preserve log length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#endif /* DHD_HAL_RING_DUMP */
-	len = dhd_get_cookie_log_len(ndev, NULL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_COOKIE, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put cookie length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#ifdef DHD_DUMP_PCIE_RINGS
-	len = dhd_get_flowring_len(ndev, NULL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_FLOWRING_DUMP, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put flowring dump length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#endif
-#ifdef DHD_STATUS_LOGGING
-	len = dhd_get_status_log_len(ndev, NULL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_STATUS_LOG, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put status log length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#endif /* DHD_STATUS_LOGGING */
-#ifdef EWP_RTT_LOGGING
-	len = dhd_get_rtt_len(ndev, NULL);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_RTT_LOG, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put rtt log length, ret=%d\n", ret));
-			goto exit;
-		}
-	}
-#endif /* EWP_RTT_LOGGING */
-#ifdef  DHD_MAP_PKTID_LOGGING
-	len = dhd_get_pktid_map_logging_len(ndev, NULL, TRUE);
-	if (len) {
-	ret = nla_put_u32(skb, DUMP_LEN_ATTR_PKTID_MAP_LOG, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put pktid log length, ret=%d", ret));
-			goto exit;
-		}
-	}
-
-	len = dhd_get_pktid_map_logging_len(ndev, NULL, FALSE);
-	if (len) {
-		ret = nla_put_u32(skb, DUMP_LEN_ATTR_PKTID_UNMAP_LOG, len);
-		if (unlikely(ret)) {
-			WL_ERR(("Failed to nla put pktid log length, ret=%d", ret));
-			goto exit;
-		}
-	}
-#endif /* DHD_MAP_PKTID_LOGGING */
-exit:
-	return ret;
-}
-
 #if defined(DNGL_AXI_ERROR_LOGGING) && defined(REPORT_AXI_ERROR)
 static void wl_cfgvendor_nla_put_axi_error_data(struct sk_buff *skb,
 		struct net_device *ndev)
@@ -9241,105 +8931,6 @@ static int wl_cfgvendor_nla_put_pktlogdump_data(struct sk_buff *skb,
 }
 #endif /* DHD_PKT_LOGGING */
 
-#ifndef DHD_HAL_RING_DUMP
-/* There is no appropriate ringbuffer to push etbdump data in google build.
- * Disable it until negotiated with Google and the etb data is required.
- */
-#ifdef DHD_SDTC_ETB_DUMP
-static int wl_cfgvendor_nla_put_sdtc_etb_dump_data(struct sk_buff *skb, struct net_device *ndev)
-{
-	dhd_pub_t *dhdp = wl_cfg80211_get_dhdp(ndev);
-	char memdump_path[MEMDUMP_PATH_LEN];
-	int ret = BCME_OK;
-
-	if (!dhdp->sdtc_etb_inited) {
-		WL_ERR(("sdtc not inited, hence donot collect SDTC dump through HAL\n"));
-		goto exit;
-	}
-	if (dhdp->sdtc_etb_dump_len <= sizeof(etb_info_t)) {
-		WL_ERR(("ETB is of zero size. Hence donot collect SDTC ETB\n"));
-		goto exit;
-	}
-	dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN, "sdtc_etb_dump");
-	ret = nla_put_string(skb, DUMP_FILENAME_ATTR_SDTC_ETB_DUMP, memdump_path);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put stdc etb dump path, ret=%d\n", ret));
-		goto exit;
-	}
-
-	ret = nla_put_u32(skb, DUMP_LEN_ATTR_SDTC_ETB_DUMP, DHD_SDTC_ETB_MEMPOOL_SIZE);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put stdc etb length, ret=%d\n", ret));
-		goto exit;
-	}
-
-exit:
-	return ret;
-}
-#else
-static int wl_cfgvendor_nla_put_sdtc_etb_dump_data(struct sk_buff *skb, struct net_device *ndev)
-{
-	return BCME_OK;
-}
-#endif /* DHD_SDTC_ETB_DUMP */
-#endif /* DHD_HAL_RING_DUMP */
-
-static int wl_cfgvendor_nla_put_memdump_data(struct sk_buff *skb,
-		struct net_device *ndev, const uint32 fw_len)
-{
-	int ret = BCME_OK;
-#ifndef DHD_HAL_RING_DUMP
-	char memdump_path[MEMDUMP_PATH_LEN];
-	dhd_get_memdump_filename(ndev, memdump_path, MEMDUMP_PATH_LEN, "mem_dump");
-	ret = nla_put_string(skb, DUMP_FILENAME_ATTR_MEM_DUMP, memdump_path);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put mem dump path, ret=%d\n", ret));
-		goto exit;
-	}
-#endif /* DHD_HAL_RING_DUMP */
-	ret = nla_put_u32(skb, DUMP_LEN_ATTR_MEMDUMP, fw_len);
-	if (unlikely(ret)) {
-		WL_ERR(("Failed to nla put mem dump length, ret=%d\n", ret));
-		goto exit;
-	}
-
-exit:
-	return ret;
-}
-
-static int wl_cfgvendor_nla_put_dump_data(dhd_pub_t *dhd_pub, struct sk_buff *skb,
-		struct net_device *ndev, const uint32 fw_len)
-{
-	int ret = BCME_OK;
-
-#if defined(DNGL_AXI_ERROR_LOGGING) && defined(REPORT_AXI_ERROR)
-	if (dhd_pub->smmu_fault_occurred) {
-		wl_cfgvendor_nla_put_axi_error_data(skb, ndev);
-	}
-#endif /* DNGL_AXI_ERROR_LOGGING && REPORT_AXI_ERROR */
-	if (dhd_pub->memdump_enabled || (dhd_pub->memdump_type == DUMP_TYPE_BY_SYSDUMP)) {
-		if (((ret = wl_cfgvendor_nla_put_debug_dump_data(skb, ndev)) < 0) ||
-			((ret = wl_cfgvendor_nla_put_memdump_data(skb, ndev, fw_len)) < 0)) {
-			goto done;
-		}
-#ifndef DHD_HAL_RING_DUMP
-		if ((ret = wl_cfgvendor_nla_put_sssr_dump_data(skb, ndev)) < 0) {
-			goto done;
-		}
-		if ((ret = wl_cfgvendor_nla_put_sdtc_etb_dump_data(skb, ndev)) < 0) {
-			goto done;
-		}
-#ifdef DHD_PKT_LOGGING
-		if ((ret = wl_cfgvendor_nla_put_pktlogdump_data(skb, ndev, FALSE)) < 0) {
-			goto done;
-		}
-#endif /* DHD_PKT_LOGGING */
-#endif /* DHD_HAL_RING_DUMP */
-	}
-done:
-	return ret;
-}
-
 static void wl_cfgvendor_dbg_send_file_dump_evt(void *ctx, const void *data,
 	const uint32 len, const uint32 fw_len)
 {
@@ -9349,7 +8940,9 @@ static void wl_cfgvendor_dbg_send_file_dump_evt(void *ctx, const void *data,
 	struct sk_buff *skb = NULL;
 	struct bcm_cfg80211 *cfg;
 	dhd_pub_t *dhd_pub;
+#ifdef DHD_PKT_LOGGING
 	int ret = BCME_OK;
+#endif
 
 	if (!ndev) {
 		WL_ERR(("ndev is NULL\n"));
@@ -9383,18 +8976,16 @@ static void wl_cfgvendor_dbg_send_file_dump_evt(void *ctx, const void *data,
 			goto done;
 		}
 		dhd_pub->pktlog_debug = FALSE;
-	} else
-#endif /* DHD_PKT_LOGGING */
-	{
-		if ((ret = wl_cfgvendor_nla_put_dump_data(dhd_pub, skb, ndev, fw_len)) < 0) {
-			WL_ERR(("nla put failed\n"));
-			goto done;
-		}
 	}
+#endif /* DHD_PKT_LOGGING */
+
 	/* TODO : Similar to above function add for debug_dump, sssr_dump, and pktlog also. */
 	cfg80211_vendor_event(skb, kflags);
 	return;
+
+#ifdef DHD_PKT_LOGGING
 done:
+#endif /* DHD_PKT_LOGGING */
 	if (skb) {
 		dev_kfree_skb_any(skb);
 	}
@@ -13593,7 +13184,6 @@ int wl_cfgvendor_detach(struct wiphy *wiphy)
 
 	return 0;
 }
-#endif /* (LINUX_VERSION_CODE > KERNEL_VERSION(3, 13, 0)) || defined(WL_VENDOR_EXT_SUPPORT) */
 
 #ifdef WL_CFGVENDOR_SEND_HANG_EVENT
 void
