@@ -157,14 +157,6 @@ typedef struct pkt_cnt_log {
 #define PKT_CNT_RSN_VALID(rsn)	\
 	(((rsn) > (PKT_CNT_RSN_INVALID)) && ((rsn) < (PKT_CNT_RSN_MAX)))
 
-static const char pkt_cnt_msg[][20] = {
-	"INVALID",
-	"ROAM_SUCCESS",
-	"GROUP_KEY_UPDATE",
-	"CONNECT_SUCCESS",
-	"INVALID"
-};
-
 static const char tx_pktfate[][30] = {
 	"TX_PKT_FATE_ACKED",			/* 0: WLFC_CTL_PKTFLAG_DISCARD */
 	"TX_PKT_FATE_FW_D11SUPPRESS",		/* 1: WLFC_CTL_PKTFLAG_D11SUPPRESS */
