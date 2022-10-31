@@ -95,6 +95,8 @@
 #include <wl_cfg_cellavoid.h>
 #endif /* WL_CELLULAR_CHAN_AVOID */
 
+#include <dhd_log_dump.h>
+
 #ifdef WL_CFGVENDOR_CUST_ADVLOG
 static void wl_cfgvendor_custom_advlog_scan_start(void *plog, uint32 armcycle);
 static void wl_cfgvendor_custom_advlog_scan_cmpl(void *plog, uint32 armcycle);

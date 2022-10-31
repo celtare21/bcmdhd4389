@@ -65,9 +65,7 @@
 #include <dhd_dbg.h>
 #include <802.1d.h>
 #include <dhd_debug.h>
-#ifdef DHD_LOG_DUMP
 #include <dhd_log_dump.h>
-#endif
 #include <dhd_dbg_ring.h>
 #include <dhd_mschdbg.h>
 #include <msgtrace.h>
@@ -151,37 +149,8 @@ int log_print_threshold = 0;
  * To keep one level operation(dhd_msg_level) in HW4,
  * dhd_msg_level and dhd_log_level have the same level
  */
-#ifdef DHD_DEBUGABILITY_LOG_DUMP_RING
-int dhd_msg_level = DHD_ERROR_VAL | DHD_EVENT_VAL
-#ifdef BOARD_HIKEY
-		| DHD_FWLOG_VAL
-#endif /* BOARD_HIKEY */
-#ifndef DHD_REDUCE_PM_LOG
-		| DHD_RPM_VAL
-#endif /* REDUCE_PM_LOG */
-	        | DHD_PKT_MON_VAL;
-int dhd_log_level = DHD_ERROR_VAL | DHD_EVENT_VAL
-		| DHD_RPM_VAL
-		| DHD_PKT_MON_VAL | DHD_FWLOG_VAL | DHD_IOVAR_MEM_VAL;
-#else
-/* For CUSTOMER_HW4/Hikey do not enable DHD_ERROR_MEM_VAL by default */
-int dhd_msg_level = DHD_ERROR_VAL | DHD_FWLOG_VAL | DHD_EVENT_VAL
-	/* For CUSTOMER_HW4 do not enable DHD_IOVAR_MEM_VAL by default */
-#if !defined(DHD_EFI) && !defined(BOARD_HIKEY)
-	| DHD_IOVAR_MEM_VAL
-#endif
-	| DHD_RPM_VAL
-	| DHD_PKT_MON_VAL;
-
-int dhd_log_level = DHD_ERROR_VAL | DHD_FWLOG_VAL | DHD_EVENT_VAL
-	/* For CUSTOMER_HW4 do not enable DHD_IOVAR_MEM_VAL by default */
-#if !defined(DHD_EFI) && !defined(BOARD_HIKEY)
-	| DHD_IOVAR_MEM_VAL
-#endif
-	| DHD_RPM_VAL
-	| DHD_PKT_MON_VAL;
-
-#endif /* DHD_DEBUGABILITY_LOG_DUMP_RING */
+int dhd_msg_level = 0;
+int dhd_log_level = 0;
 
 #ifdef NDIS
 extern uint wl_msg_level;

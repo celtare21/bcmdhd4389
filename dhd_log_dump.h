@@ -408,6 +408,16 @@ void cfgvendor_log_dump_len(dhd_pub_t *dhdp, log_dump_type_t *type, struct sk_bu
 #ifdef DHD_IOVAR_LOG_FILTER_DUMP
 bool dhd_iovar_log_dump_check(dhd_pub_t *dhd_pub, uint32 cmd, char *msg);
 #endif /* DHD_IOVAR_LOG_FILTER_DUMP */
+#else /* DHD_LOG_DUMP */
+static inline void get_debug_dump_time(char *str)
+{
+}
+static inline void clear_debug_dump_time(char *str)
+{
+}
+static inline void copy_debug_dump_time(char *dest, char *src)
+{
+}
 #endif /* DHD_LOG_DUMP */
 
 #endif /* !__DHD_LOG_DUMP_H__ */

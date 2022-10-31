@@ -84,6 +84,8 @@
 #include <dhd_bitpack.h>
 #endif /* DHD_EWPR_VER2 */
 
+#include <dhd_log_dump.h>
+
 extern char dhd_version[];
 extern char fw_version[];
 

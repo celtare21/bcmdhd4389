@@ -38,8 +38,9 @@
 #include <wl_cfg80211.h>
 #endif /* WL_CFG80211 */
 
-#ifdef SHOW_LOGTRACE
 extern dhd_pub_t* g_dhd_pub;
+
+#ifdef SHOW_LOGTRACE
 static int dhd_ring_proc_open(struct inode *inode, struct file *file);
 ssize_t dhd_ring_proc_read(struct file *file, char *buffer, size_t tt, loff_t *loff);
 
